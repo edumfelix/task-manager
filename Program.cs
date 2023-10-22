@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Net.Http.Headers;
 using TaskManager.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,11 +16,11 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
-
-
 // Configure the HTTP request pipeline.
+
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
 if (!app.Environment.IsDevelopment())
 {
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
@@ -28,7 +30,6 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseEndpoints(endpoint => endpoint.MapControllers());
 
 app.MapControllerRoute(
     name: "default",
