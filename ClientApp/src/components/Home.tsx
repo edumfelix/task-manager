@@ -5,7 +5,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 export function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -25,6 +27,28 @@ export function Home() {
       }
     });
   };
+  
+  const handleEditSubmit = () => {
+    if (editingTask) {
+      api.put(`/${editingTask.id}`, {
+        title: formData.title,
+        description: formData.description,
+        isCompleted: formData.isCompleted,
+      }).then((response) => {
+        if (response.status === 200) {
+          // Atualização bem-sucedida
+          setTasks((prevTasks) => prevTasks.filter((task) => task.id !== editingTask.id));
+          reloadTasks();
+          closeEditModal();
+        } else {
+          console.error("Erro na requisição PUT:", response.status, response.data);
+        }
+      }).catch((error) => {
+        console.error("Erro na requisição PUT:", error);
+      });
+    };
+  }
+  
 
   const handleFormSubmit = () => {
     api.post("/", formData).then((response) => {
@@ -33,7 +57,7 @@ export function Home() {
       }
     });
     reloadTasks();
-    closeModal();
+    closeAddModal();
   };
 
   const reloadTasks = () => {
@@ -42,32 +66,33 @@ export function Home() {
     });
   };
 
-  const editTask = (taskId: number) => {
-    api.put(`/${taskId}`).then((response) => {
-      if (response.status === 200) {
-        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
-      }
-    });
-    closeModal();
+  const openAddModal = () => {
+    setShowAddModal(true);
   };
 
-  const openModal = () => {
-    setShowModal(true);
+  const closeAddModal = () => {
+    setShowAddModal(false);
+  };
+  
+  const openEditModal = (task: Task) => {
+    setEditingTask(task);
+    setShowEditModal(true);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
+  const closeEditModal = () => {
+    setEditingTask(null);
+    setShowEditModal(false);
   };
 
   return (
     <div>
       <div>
-        <button type="button" className="btn btn-primary" onClick={openModal}>
+        <button type="button" className="btn btn-primary" onClick={openAddModal}>
           Add Task
         </button>
       </div>
 
-      {showModal && ( // Add Task
+      {showAddModal && ( // Add Task
         <div
           className="modal"
           tabIndex={-1}
@@ -78,7 +103,7 @@ export function Home() {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Add Task</h5>
-                <button type="button" className="close" onClick={closeModal}>
+                <button type="button" className="close" onClick={closeAddModal}>
                   <span>&times;</span>
                 </button>
               </div>
@@ -116,7 +141,77 @@ export function Home() {
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={closeModal}
+                  onClick={closeAddModal}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && editingTask && ( // Edit Task
+        <div
+          className="modal"
+          tabIndex={-1}
+          role="dialog"
+          style={{ display: "block" }}
+        >
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Edit Task</h5>
+                <button type="button" className="close" onClick={closeEditModal}>
+                  <span>&times;</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Title:</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Description:</label>
+                  <textarea
+                    className="form-control"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                  ></textarea>
+                </div>
+                <div className="form-group">
+                  <label className="form-check-label">Is completed?</label>
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={formData.isCompleted}
+                    id="flexCheckDefault"
+                    onChange={(e) =>
+                      setFormData({ ...formData, isCompleted: e.target.checked })}
+                    ></input>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleEditSubmit}
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={closeEditModal}
                 >
                   Close
                 </button>
@@ -143,7 +238,11 @@ export function Home() {
                 <td>{task.description}</td>
                 <td>{task.isCompleted ? "Yes" : "No"}</td>
                 <td>
-                  <button type="button" className="btn btn-sm btn-outline-info">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-info"
+                    onClick={() => openEditModal(task)}
+                  >
                     Edit
                   </button>
                   |
