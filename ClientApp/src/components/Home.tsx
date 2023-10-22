@@ -32,7 +32,14 @@ export function Home() {
         setTasks((prevTasks) => [...prevTasks, response.data]);
       }
     });
+    reloadTasks();
     closeModal();
+  };
+
+  const reloadTasks = () => {
+    api.get("/").then((response) => {
+      setTasks(response.data);
+    });
   };
 
   const editTask = (taskId: number) => {
@@ -104,7 +111,7 @@ export function Home() {
                   className="btn btn-primary"
                   onClick={handleFormSubmit}
                 >
-                  Create Task
+                  Save
                 </button>
                 <button
                   type="button"
